@@ -13,7 +13,12 @@ body{
 font-family:Segoe UI, sans-serif;
 margin:0;
 background:#eef2f6;
+display:flex;
+flex-direction:column;
+min-height:100vh;
 }
+
+/* HEADER */
 
 header{
 background:linear-gradient(90deg,#0d6ea8,#2e9e44);
@@ -21,6 +26,7 @@ color:white;
 text-align:center;
 padding:15px;
 position:relative;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
 }
 
 .logo-left{
@@ -37,16 +43,25 @@ top:10px;
 height:50px;
 }
 
+/* LAYOUT */
+
 .layout{
 display:flex;
-min-height:90vh;
+flex:1;
+min-height:80vh;
 }
 
+/* SIDEBAR */
+
 .sidebar{
-width:200px;
+width:220px;
 background:white;
 border-right:1px solid #ddd;
 padding:15px;
+}
+
+.sidebar h3{
+text-align:center;
 }
 
 .qnav{
@@ -61,6 +76,11 @@ border:none;
 background:#ddd;
 border-radius:4px;
 cursor:pointer;
+transition:0.3s;
+}
+
+.qnav button:hover{
+background:#b9d7c5;
 }
 
 .qnav button.respondida{
@@ -68,10 +88,21 @@ background:#2e9e44;
 color:white;
 }
 
+/* MAIN */
+
 .main{
 flex:1;
 padding:30px;
 }
+
+input{
+padding:10px;
+margin:5px 10px 15px 0;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+/* PROGRESS */
 
 .progress-container{
 width:100%;
@@ -85,23 +116,46 @@ height:12px;
 background:#2e9e44;
 width:0%;
 border-radius:20px;
+transition:width .5s ease;
 }
+
+/* TIMER */
 
 .timer{
 font-weight:bold;
 margin-bottom:15px;
+text-align:center;
+font-size:18px;
+color:#0d6ea8;
 }
+
+/* QUESTION */
 
 .question-card{
 background:white;
 padding:25px;
 border-radius:10px;
 box-shadow:0 5px 15px rgba(0,0,0,0.1);
+max-width:700px;
+animation:fadeIn .4s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(10px)}
+to{opacity:1; transform:translateY(0)}
 }
 
 .option{
 display:block;
 margin-top:10px;
+padding:8px;
+border-radius:6px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.option:hover{
+background:#f0f7f3;
 }
 
 .nav-buttons{
@@ -117,6 +171,8 @@ background:#0d6ea8;
 color:white;
 border-radius:6px;
 cursor:pointer;
+font-size:15px;
+transition:0.3s;
 }
 
 button:hover{
@@ -126,10 +182,24 @@ background:#2e9e44;
 .alerta{
 color:red;
 font-weight:bold;
+text-align:center;
 margin-top:10px;
 }
 
-@media(max-width:768px){
+/* FOOTER */
+
+footer{
+background:#0d6ea8;
+color:white;
+text-align:center;
+padding:12px;
+font-size:14px;
+margin-top:auto;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:900px){
 
 .layout{
 flex-direction:column;
@@ -141,6 +211,18 @@ border-right:none;
 border-bottom:1px solid #ddd;
 }
 
+.main{
+padding:20px;
+}
+
+.qnav{
+grid-template-columns:repeat(10,1fr);
+}
+
+input{
+width:100%;
+}
+
 }
 
 </style>
@@ -150,8 +232,8 @@ border-bottom:1px solid #ddd;
 
 <header>
 
-<img src="logo_utld.png" class="logo-left">
-<img src="logo_renders.png" class="logo-right">
+<img src="logo_renders.png" class="logo-left">
+<img src="logo_utld.png" class="logo-right">
 
 <h2>Desarrollo Humano y Valores</h2>
 <h3>Unidad 2 – Axiología</h3>
@@ -169,7 +251,7 @@ border-bottom:1px solid #ddd;
 <hr>
 
 <div class="timer">
-Tiempo restante: <span id="time">30:00</span>
+⏱ Tiempo restante: <span id="time">30:00</span>
 </div>
 
 <div id="alerta" class="alerta"></div>
@@ -194,12 +276,20 @@ Matrícula
 
 </div>
 
+<footer>
+Universidad Tecnológica de La Laguna Durango | Evaluación de Conocimientos | TSU en Turbo Solar
+</footer>
+
 <script>
+
+/* VARIABLES */
 
 let advertencias=0
 let tiempo=1800
 let current=0
 let respuestas=[]
+
+/* PREGUNTAS */
 
 const preguntas=[
 
@@ -239,6 +329,8 @@ const preguntas=[
 const container=document.getElementById("questionContainer")
 const nav=document.getElementById("qnav")
 
+/* GENERAR NAV */
+
 preguntas.forEach((p,i)=>{
 
 let b=document.createElement("button")
@@ -247,6 +339,8 @@ b.onclick=()=>mostrarPregunta(i)
 nav.appendChild(b)
 
 })
+
+/* MOSTRAR PREGUNTA */
 
 function mostrarPregunta(i){
 
@@ -285,6 +379,8 @@ actualizarProgreso()
 
 }
 
+/* GUARDAR RESPUESTA */
+
 function guardar(val){
 
 respuestas[current]=val
@@ -301,6 +397,8 @@ function anterior(){
 if(current>0) mostrarPregunta(current-1)
 }
 
+/* PROGRESO */
+
 function actualizarProgreso(){
 
 let contestadas=respuestas.filter(r=>r!=undefined).length
@@ -309,6 +407,47 @@ let porcentaje=(contestadas/preguntas.length)*100
 document.getElementById("progressBar").style.width=porcentaje+"%"
 
 }
+
+/* TEMPORIZADOR */
+
+setInterval(()=>{
+
+tiempo--
+
+let m=Math.floor(tiempo/60)
+let s=tiempo%60
+
+document.getElementById("time").innerText=
+`${m}:${s.toString().padStart(2,"0")}`
+
+if(tiempo<=0) terminar()
+
+},1000)
+
+/* DETECTAR CAMBIO DE PESTAÑA */
+
+document.addEventListener("visibilitychange",()=>{
+
+if(document.hidden){
+
+advertencias++
+
+document.getElementById("alerta").innerText=
+"Advertencias: "+advertencias+" / 3"
+
+if(advertencias>=3){
+
+alert("Examen finalizado por cambiar de pestaña")
+
+terminar()
+
+}
+
+}
+
+})
+
+/* TERMINAR */
 
 function terminar(){
 
@@ -327,7 +466,6 @@ csv+=`${nombre},${matricula},${score}/${preguntas.length},${advertencias},${fech
 
 let blob=new Blob([csv],{type:"text/csv"})
 let link=document.createElement("a")
-
 link.href=URL.createObjectURL(blob)
 link.download="resultado_examen_axiologia.csv"
 link.click()
@@ -335,7 +473,6 @@ link.click()
 fetch("https://script.google.com/macros/s/AKfycbxXqlvPbS1kqcvpT861SEAjUz34udGGwAzB5LS5iVayU3yjFu4xOrlVmDGFRjRUcuUXEA/exec",{
 
 method:"POST",
-
 body:JSON.stringify({
 nombre:nombre,
 matricula:matricula,
@@ -363,41 +500,6 @@ Gracias por completar la evaluación.
 `
 
 }
-
-setInterval(()=>{
-
-tiempo--
-
-let m=Math.floor(tiempo/60)
-let s=tiempo%60
-
-document.getElementById("time").innerText=
-`${m}:${s.toString().padStart(2,"0")}`
-
-if(tiempo<=0) terminar()
-
-},1000)
-
-document.addEventListener("visibilitychange",()=>{
-
-if(document.hidden){
-
-advertencias++
-
-document.getElementById("alerta").innerText=
-"Advertencias: "+advertencias+" / 3"
-
-if(advertencias>=3){
-
-alert("Examen finalizado por cambiar de pestaña")
-
-terminar()
-
-}
-
-}
-
-})
 
 mostrarPregunta(0)
 
