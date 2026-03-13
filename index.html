@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Plataforma de Evaluación - Axiología</title>
+
+<style>
+
+body{
+font-family:Segoe UI, sans-serif;
+margin:0;
+background:#eef2f6;
+}
+
+header{
+background:linear-gradient(90deg,#0d6ea8,#2e9e44);
+color:white;
+text-align:center;
+padding:15px;
+position:relative;
+}
+
+.logo-left{
+position:absolute;
+left:15px;
+top:10px;
+height:50px;
+}
+
+.logo-right{
+position:absolute;
+right:15px;
+top:10px;
+height:50px;
+}
+
+.layout{
+display:flex;
+min-height:90vh;
+}
+
+.sidebar{
+width:200px;
+background:white;
+border-right:1px solid #ddd;
+padding:15px;
+}
+
+.qnav{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:6px;
+}
+
+.qnav button{
+padding:8px;
+border:none;
+background:#ddd;
+border-radius:4px;
+cursor:pointer;
+}
+
+.qnav button.respondida{
+background:#2e9e44;
+color:white;
+}
+
+.main{
+flex:1;
+padding:30px;
+}
+
+.progress-container{
+width:100%;
+background:#ddd;
+border-radius:20px;
+margin-bottom:15px;
+}
+
+.progress-bar{
+height:12px;
+background:#2e9e44;
+width:0%;
+border-radius:20px;
+}
+
+.timer{
+font-weight:bold;
+margin-bottom:15px;
+}
+
+.question-card{
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.option{
+display:block;
+margin-top:10px;
+}
+
+.nav-buttons{
+margin-top:20px;
+display:flex;
+justify-content:space-between;
+}
+
+button{
+padding:12px 20px;
+border:none;
+background:#0d6ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#2e9e44;
+}
+
+.alerta{
+color:red;
+font-weight:bold;
+margin-top:10px;
+}
+
+@media(max-width:768px){
+
+.layout{
+flex-direction:column;
+}
+
+.sidebar{
+width:100%;
+border-right:none;
+border-bottom:1px solid #ddd;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<img src="logo_utld.png" class="logo-left">
+<img src="logo_renders.png" class="logo-right">
+
+<h2>Desarrollo Humano y Valores</h2>
+<h3>Unidad 2 – Axiología</h3>
+
+</header>
+
+<div class="layout">
+
+<div class="sidebar">
+
+<h3>Preguntas</h3>
+
+<div class="qnav" id="qnav"></div>
+
+<hr>
+
+<div class="timer">
+Tiempo restante: <span id="time">30:00</span>
+</div>
+
+<div id="alerta" class="alerta"></div>
+
+</div>
+
+<div class="main">
+
+Nombre
+<input type="text" id="nombre">
+
+Matrícula
+<input type="text" id="matricula">
+
+<div class="progress-container">
+<div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div id="questionContainer"></div>
+
+</div>
+
+</div>
+
+<script>
+
+let advertencias=0
+let tiempo=1800
+let current=0
+let respuestas=[]
+
+const preguntas=[
+
+["¿Qué estudia la axiología?",["La estructura del universo","La naturaleza de los valores","La genética","El clima"],1],
+["La palabra axiología significa:",["Estudio de la verdad","Estudio de los valores","Estudio del poder","Estudio del conocimiento"],1],
+["Los valores influyen principalmente en:",["El clima","La conducta humana","La biología","La economía"],1],
+["Los valores permiten:",["Orientar decisiones","Eliminar problemas","Controlar naturaleza","Crear leyes físicas"],0],
+["Los valores son base de:",["Normas éticas","Leyes naturales","Tecnología","Física"],0],
+["Los valores independientes del sujeto corresponden al:",["Relativismo","Objetivismo","Subjetivismo","Materialismo"],1],
+["Valores basados en percepción personal:",["Absolutismo","Subjetivismo","Idealismo","Empirismo"],1],
+["Valores según contexto cultural:",["Relativismo","Absolutismo","Racionalismo","Empirismo"],0],
+["Filósofo de jerarquía de valores:",["Marx","Max Scheler","Kant","Nietzsche"],1],
+["Valor trascendental:",["Dinero","Verdad","Moda","Tecnología"],1],
+["Valor relacionado con estética:",["Belleza","Justicia","Salud","Dinero"],0],
+["Valor moral fundamental:",["Bien","Tecnología","Moda","Economía"],0],
+["Valor social importante:",["Justicia","Dinero","Popularidad","Moda"],0],
+["Corriente filosófica de valores ideales:",["Idealismo axiológico","Materialismo","Empirismo","Naturalismo"],0],
+["Corriente centrada en experiencia humana:",["Existencialismo","Materialismo","Racionalismo","Empirismo"],0],
+["Corriente centrada en dignidad humana:",["Personalismo","Empirismo","Nihilismo","Positivismo"],0],
+["Valores trascendentales incluyen:",["Verdad","Dinero","Tecnología","Moda"],0],
+["Los valores ayudan a:",["Formar ética","Eliminar cultura","Controlar clima","Crear biología"],0],
+["Autor que habla del proyecto de vida:",["María Pliego","Darwin","Newton","Tesla"],0],
+["Autor que dice que valores se descubren:",["Ortega y Gasset","Freud","Einstein","Aristóteles"],0],
+["Según Giroux los valores:",["Cambian según contexto","Nunca cambian","Son biológicos","No existen"],0],
+["Decir verdad en examen refleja:",["Honestidad","Dinero","Popularidad","Poder"],0],
+["Rechazar trabajo por ética muestra:",["Jerarquía de valores","Miedo","Falta ambición","Desorganización"],0],
+["Valores culturales distintos reflejan:",["Relativismo","Absolutismo","Biología","Empirismo"],0],
+["Valores cambian con experiencia:",["Evolución de valores","Ausencia de valores","Negación ética","Materialismo"],0],
+["Estudiar axiología sirve para:",["Decisiones éticas","Más dinero","Evitar responsabilidades","Ignorar cultura"],0],
+["Los valores construyen:",["Identidad personal","Clima","Tecnología","Dinero"],0],
+["Los valores influyen en:",["Cultura","Genética","Clima","Planetas"],0],
+["Los valores se desarrollan mediante:",["Experiencia","Genética","Clima","Tecnología"],0],
+["Los valores universales son:",["Principios válidos para todos","Reglas económicas","Leyes físicas","Normas tecnológicas"],0]
+
+]
+
+const container=document.getElementById("questionContainer")
+const nav=document.getElementById("qnav")
+
+preguntas.forEach((p,i)=>{
+
+let b=document.createElement("button")
+b.innerText=i+1
+b.onclick=()=>mostrarPregunta(i)
+nav.appendChild(b)
+
+})
+
+function mostrarPregunta(i){
+
+current=i
+let p=preguntas[i]
+
+let html=`<div class="question-card">
+<h3>Pregunta ${i+1} de ${preguntas.length}</h3>
+<p>${p[0]}</p>`
+
+p[1].forEach((op,j)=>{
+
+let checked=respuestas[i]==j?"checked":""
+
+html+=`<label class="option">
+<input type="radio" name="op" value="${j}" ${checked}
+onclick="guardar(${j})"> ${op}
+</label>`
+
+})
+
+html+=`<div class="nav-buttons">`
+
+if(i>0) html+=`<button onclick="anterior()">Anterior</button>`
+
+if(i<preguntas.length-1)
+html+=`<button onclick="siguiente()">Siguiente</button>`
+else
+html+=`<button onclick="terminar()">Enviar examen</button>`
+
+html+=`</div></div>`
+
+container.innerHTML=html
+
+actualizarProgreso()
+
+}
+
+function guardar(val){
+
+respuestas[current]=val
+nav.children[current].classList.add("respondida")
+actualizarProgreso()
+
+}
+
+function siguiente(){
+if(current<preguntas.length-1) mostrarPregunta(current+1)
+}
+
+function anterior(){
+if(current>0) mostrarPregunta(current-1)
+}
+
+function actualizarProgreso(){
+
+let contestadas=respuestas.filter(r=>r!=undefined).length
+let porcentaje=(contestadas/preguntas.length)*100
+
+document.getElementById("progressBar").style.width=porcentaje+"%"
+
+}
+
+function terminar(){
+
+let score=0
+
+preguntas.forEach((p,i)=>{
+if(respuestas[i]==p[2]) score++
+})
+
+let nombre=document.getElementById("nombre").value
+let matricula=document.getElementById("matricula").value
+let fecha=new Date().toLocaleString()
+
+let csv="Nombre,Matricula,Resultado,Advertencias,Fecha\n"
+csv+=`${nombre},${matricula},${score}/${preguntas.length},${advertencias},${fecha}`
+
+let blob=new Blob([csv],{type:"text/csv"})
+let link=document.createElement("a")
+
+link.href=URL.createObjectURL(blob)
+link.download="resultado_examen_axiologia.csv"
+link.click()
+
+fetch("https://script.google.com/macros/s/AKfycbxXqlvPbS1kqcvpT861SEAjUz34udGGwAzB5LS5iVayU3yjFu4xOrlVmDGFRjRUcuUXEA/exec",{
+
+method:"POST",
+
+body:JSON.stringify({
+nombre:nombre,
+matricula:matricula,
+resultado:score+"/"+preguntas.length,
+advertencias:advertencias,
+fecha:fecha
+})
+
+})
+
+container.innerHTML=`
+<div style="text-align:center;font-size:22px">
+
+✔ Examen enviado correctamente
+
+<br><br>
+
+Resultado: ${score} / ${preguntas.length}
+
+<br><br>
+
+Gracias por completar la evaluación.
+
+</div>
+`
+
+}
+
+setInterval(()=>{
+
+tiempo--
+
+let m=Math.floor(tiempo/60)
+let s=tiempo%60
+
+document.getElementById("time").innerText=
+`${m}:${s.toString().padStart(2,"0")}`
+
+if(tiempo<=0) terminar()
+
+},1000)
+
+document.addEventListener("visibilitychange",()=>{
+
+if(document.hidden){
+
+advertencias++
+
+document.getElementById("alerta").innerText=
+"Advertencias: "+advertencias+" / 3"
+
+if(advertencias>=3){
+
+alert("Examen finalizado por cambiar de pestaña")
+
+terminar()
+
+}
+
+}
+
+})
+
+mostrarPregunta(0)
+
+</script>
+
+</body>
+</html>
